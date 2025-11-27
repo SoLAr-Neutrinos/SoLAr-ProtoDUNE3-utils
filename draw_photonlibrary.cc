@@ -29,6 +29,7 @@ int draw_photonlibrary(const TString& photonlib_path)
   TTreeReaderArray<float> tmain_vtot(reader, "vis_tot_tile_main");
   TTreeReaderArray<float> tmain_vdir(reader, "vis_dir_tile_main");
   TTreeReaderArray<float> tmain_vwls(reader, "vis_wls_tile_main");
+  TTreeReaderArray<float> tmain_sipm(reader, "vis_sipm_main");
 
   float xref[3] = {0.0, -175.05, 0.0};
 
@@ -59,9 +60,9 @@ int draw_photonlibrary(const TString& photonlib_path)
     float zz = (*z)*0.1;
 
     int ibin = h3vis_tot->FindBin(xx, zz, yy);
-    h3vis_tot->SetBinContent(ibin, (*vtot)*100);
-    h3vis_dir->SetBinContent(ibin, (*vdir)*100);
-    h3vis_wls->SetBinContent(ibin, (*vwls)*100);
+    h3vis_tot->SetBinContent(ibin, (*vtot));
+    h3vis_dir->SetBinContent(ibin, (*vdir));
+    h3vis_wls->SetBinContent(ibin, (*vwls));
   }
 
   gStyle->SetCanvasPreferGL();
@@ -89,15 +90,16 @@ int draw_photonlibrary(const TString& photonlib_path)
   for (int i=0; i<3; i++) {
     h2vis[i]->GetZaxis()->SetRangeUser(0, maxv);
     h2vis[i]->GetYaxis()->SetTitleOffset(1.4);
+    h2vis[i]->SetEntries( h3vis_tot->GetNbinsX() * h3vis_tot->GetNbinsY() * h3vis_tot->GetNbinsZ());
   }
   h2vis_dir->GetZaxis()->SetRangeUser(0, maxv);
   h2vis_wls->GetZaxis()->SetRangeUser(0, maxv);  
 
-  TCanvas* cvis2D = new TCanvas("cvis2D", "cvis2D", 0, 0, 2000, 800);
-  cvis2D->Divide(3,1);
-  cvis2D->cd(1); gPad->SetLeftMargin(0.12); gPad->SetRightMargin(0.15); h2vis_tot->Draw("colz");
-  cvis2D->cd(2); gPad->SetLeftMargin(0.12); gPad->SetRightMargin(0.15); h2vis_dir->Draw("colz");
-  cvis2D->cd(3); gPad->SetLeftMargin(0.12); gPad->SetRightMargin(0.15); h2vis_wls->Draw("colz");
+  TCanvas* cvis2D = new TCanvas("cvis2D", "cvis2D", 0, 0, 1600, 800);
+  cvis2D->Divide(2,1);
+  //cvis2D->cd(1); gPad->SetLeftMargin(0.12); gPad->SetRightMargin(0.15); h2vis_tot->Draw("colz");
+  cvis2D->cd(1); gPad->SetLeftMargin(0.12); gPad->SetRightMargin(0.15); h2vis_dir->Draw("colz");
+  cvis2D->cd(2); gPad->SetLeftMargin(0.12); gPad->SetRightMargin(0.15); h2vis_wls->Draw("colz");
 
   return 0;
 }
