@@ -34,19 +34,43 @@ if(SOLAr-sim_FOUND)
   list(APPEND CMAKE_PREFIX_PATH ${SOLARSIM_EXT_DIR})
 endif()
 
-add_executable(make_vis_tree make_vis_tree.cc)
-target_link_libraries(make_vis_tree 
-  PRIVATE ROOT::RIO ROOT::Tree ROOT::Core
-  SOLARSIM::SLArMCEventReadout
-  SOLARSIM::SLArGenRecords
-)
-target_include_directories(make_vis_tree
-  PRIVATE
-  ${SOLARSIM_INCLUDE_DIR}
+find_package(RapidJSON REQUIRED)
+if (RapidJSON_FOUND)
+  message(STATUS "RapidJSON found: include dir at ${RAPIDJSON_INCLUDE_DIRS}")
+endif()
+
+
+include_directories(
+  ${RapidJSON_INCLUDE_DIR}
   ${ROOT_INCLUDE_DIRS}
 )
 
-install(TARGETS make_vis_tree 
-  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}
-  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}
+add_executable(make_vis_tree make_vis_tree.cc)
+add_executable(make_vis_map make_vis_map.cc)
+
+# Executables list
+SET(solarpd3_executables
+  make_vis_tree
+  make_vis_map
 )
+
+FOREACH(exe ${solarpd3_executables})
+  target_link_libraries( ${exe}
+    PRIVATE ROOT::RIO ROOT::Tree ROOT::Core
+    SOLARSIM::SLArMCEventReadout
+    SOLARSIM::SLArGenRecords
+  )
+
+  target_include_directories( ${exe}
+    PRIVATE
+    ${SOLARSIM_INCLUDE_DIR}
+    ${ROOT_INCLUDE_DIRS}
+  )
+
+  install(TARGETS ${exe}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}
+  )  
+ENDFOREACH(exe)
+
+
