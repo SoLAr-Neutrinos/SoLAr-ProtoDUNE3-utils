@@ -38,7 +38,7 @@ class LRUFileCache {
       }
     }
 
-    TTree* getTree(const std::string& filename) {
+    TTree* getTree(const std::string& filename, const bool debug = false) {
       // Check if file is in cache
       auto it = cacheMap.find(filename);
 
@@ -66,7 +66,8 @@ class LRUFileCache {
         fileMap.erase(lruFile);
         treeMap.erase(lruFile);
 
-        std::cout << "\rCache: Closed " << lruFile << std::string(20, ' ') << std::flush;
+        if (debug) 
+          std::cout << "\rCache: Closed " << lruFile << std::string(20, ' ') << std::flush;
       }
 
       // Open new file
@@ -120,21 +121,25 @@ int make_vis_map(const TString &json_filemap, const TString &output_file_path) {
   d.ParseStream<rapidjson::kParseCommentsFlag>(is);
   assert(d.IsArray());
 
-  size_t maxCacheSize = 100;
+  size_t maxCacheSize = 500;
   const TString treeName = "photonLib";
 
   LRUFileCache cache(maxCacheSize, treeName.Data());
   const auto& first_entry = d[0];
 
   // Open the first file to get the tree structure
-  TTree* firstTree = cache.getTree(first_entry["filepath"].GetString());
+  TString first_entry_path = first_entry["filepath"].GetString();
+  first_entry_path.Insert( first_entry_path.Index(".root"), "_vtree");
+  TString filename_tmp = gSystem->BaseName(first_entry_path);
+
+  TTree* firstTree = cache.getTree(first_entry_path.Data());
   if (!firstTree) {
     std::cerr << "Error: Cannot open first file or tree" << std::endl;
     return 1;
   }
 
   // Create output file and clone tree structure
-  TFile* outFile = TFile::Open(output_file_path, "RECREATE");
+  TFile* outFile = TFile::Open(output_file_path, "RECREATE", "SoLAr photon library - ProtoDUNE-Run3", ROOT::CompressionSettings(ROOT::kLZMA, 1));
   if (!outFile || outFile->IsZombie()) {
     std::cerr << "Error: Cannot create output file: " << output_file_path << std::endl;
     return 1;
@@ -152,13 +157,17 @@ int make_vis_map(const TString &json_filemap, const TString &output_file_path) {
     TString filename = gSystem->BaseName(jval["filepath"].GetString());
     filename.Insert( filename.Index(".root"), "_vtree");
 
-    printf("[%lld] %s - entry %lld\n", num_entries, filename.Data(), entry_nr);
+    //printf("[%lld] %s - entry %lld\n", num_entries, filename.Data(), entry_nr);
   
     TTree* sourceTree = cache.getTree( (dirname + "/" + filename).Data() );
     if (!sourceTree) {
       fprintf(stderr, "  Skipping entry %lld in %s due to missing tree.\n", 
               entry_nr, (dirname + "/" + filename).Data());
       continue;
+    }
+    if (filename != filename_tmp) {
+      outTree->CopyAddresses(sourceTree);
+      filename_tmp = filename;
     }
 
     sourceTree->GetEntry(entry_nr);
