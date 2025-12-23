@@ -54,19 +54,28 @@ SET(solarpd3_executables
   make_vis_map
 )
 
-FOREACH(exe ${solarpd3_executables})
-  target_link_libraries( ${exe}
+target_link_libraries(make_vis_tree 
     PRIVATE ROOT::RIO ROOT::Tree ROOT::Core
     SOLARSIM::SLArMCEventReadout
     SOLARSIM::SLArGenRecords
-  )
+)
+target_include_directories( make_vis_tree
+  PRIVATE
+  ${SOLARSIM_INCLUDE_DIR}
+  ${ROOT_INCLUDE_DIRS}
+)
 
-  target_include_directories( ${exe}
-    PRIVATE
-    ${SOLARSIM_INCLUDE_DIR}
-    ${ROOT_INCLUDE_DIRS}
-  )
+target_link_libraries( make_vis_map
+  PRIVATE ROOT::RIO ROOT::Tree ROOT::Core
+)
 
+target_include_directories( make_vis_map
+  PRIVATE
+  ${ROOT_INCLUDE_DIRS}
+)
+
+
+FOREACH(exe ${solarpd3_executables})
   install(TARGETS ${exe}
     LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}
     RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}
